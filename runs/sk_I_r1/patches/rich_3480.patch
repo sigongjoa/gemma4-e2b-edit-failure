@@ -1,0 +1,31 @@
+diff --git a/rich/live.py b/rich/live.py
+index 8738cf09..7692f9cf 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -130,6 +130,26 @@ class Live(JupyterMixin, RenderHook):
+             if self.auto_refresh:
+                 self._refresh_thread = _RefreshThread(self, self.refresh_per_second)
+                 self._refresh_thread.start()
++            self.console.set_live(self)
++            self._started = True
++            if self._screen:
++                self._alt_screen = self.console.set_alt_screen(True)
++            self.console.show_cursor(False)
++            self._enable_redirect_io()
++            self.console.push_render_hook(self)
++            if refresh:
++                try:
++                    self.refresh()
++                except Exception:
++                    # If refresh fails, we want to stop the redirection of sys.stderr,
++                    # so the error stacktrace is properly displayed in the terminal.
++                    # (or, if the code that calls Rich captures the exception and wants to display something,
++                    # let this be displayed in the terminal).
++                    self.stop()
++                    raise
++            if self.auto_refresh:
++                self._refresh_thread = _RefreshThread(self, self.refresh_per_second)
++                self._refresh_thread.start()
+ 
+     def stop(self) -> None:
+         """Stop live rendering display."""

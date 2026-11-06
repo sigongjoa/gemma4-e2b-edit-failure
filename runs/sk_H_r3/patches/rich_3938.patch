@@ -1,0 +1,39 @@
+diff --git a/rich/_wrap.py b/rich/_wrap.py
+index 2e94ff6f..ecf5e063 100644
+--- a/rich/_wrap.py
++++ b/rich/_wrap.py
+@@ -50,10 +50,15 @@ def divide_line(text: str, width: int, fold: bool = True) -> list[int]:
+             # Simplest case - the word fits within the remaining width for this line.
+             cell_offset += _cell_len(word)
+         else:
+-            # Not enough space remaining for this word on the current line.
+-            if word_length > width:
+-                # The word doesn't fit on any line, so we can't simply
+-                # place it on the next line...
++            if start > 0:
++                append(start)
++                cell_offset = 0
++
++            if word_fits_remaining_space:
++                # Simplest case - the word fits within the remaining width for this line.
++                cell_offset += _cell_len(word)
++            else:
++                # Not enough space remaining for this word on the current line.
+                 if fold:
+                     # Fold the word across multiple lines.
+                     folded_word = chop_cells(word, width=width)
+@@ -66,14 +71,7 @@ def divide_line(text: str, width: int, fold: bool = True) -> list[int]:
+                             start += len(line)
+                 else:
+                     # Folding isn't allowed, so crop the word.
+-                    if start:
+-                        append(start)
+                     cell_offset = _cell_len(word)
+-            elif cell_offset and start:
+-                # The word doesn't fit within the remaining space on the current
+-                # line, but it *can* fit on to the next (empty) line.
+-                append(start)
+-                cell_offset = _cell_len(word)
+ 
+     return break_positions
+ 

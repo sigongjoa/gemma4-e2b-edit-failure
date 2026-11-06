@@ -1,0 +1,22 @@
+diff --git a/rich/_fileno.py b/rich/_fileno.py
+index b17ee651..2325e50f 100644
+--- a/rich/_fileno.py
++++ b/rich/_fileno.py
+@@ -16,9 +16,16 @@ def get_fileno(file_like: IO[str]) -> int | None:
+     if fileno is not None:
+         try:
+             return fileno()
+-        except Exception:
++def get_fileno(file_like: IO[str]) -> int | None:
++    """Get fileno() from a file, accounting for poorly implemented file-like objects."""
++    fileno: Callable[[], int] | None = getattr(file_like, "fileno", None)
++    if fileno is not None:
++        try:
++            return fileno()
++        except (OSError, BrokenPipe):
+             # `fileno` is documented as potentially raising a OSError
+             # Alas, from the issues, there are so many poorly implemented file-like objects,
+             # that `fileno()` can raise just about anything.
+             return None
+     return None
++    return None

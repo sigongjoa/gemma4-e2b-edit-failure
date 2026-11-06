@@ -1,0 +1,22 @@
+diff --git a/rich/progress.py b/rich/progress.py
+index effcab40..a19f4c3e 100644
+--- a/rich/progress.py
++++ b/rich/progress.py
+@@ -208,9 +208,14 @@ class _Reader(RawIOBase, BinaryIO):
+         return self
+ 
+     def __next__(self) -> bytes:
+-        line = next(self.handle)
+-        self.progress.advance(self.task, advance=len(line))
+-        return line
++        try:
++            line = next(self.handle)
++            self.progress.advance(self.task, advance=len(line))
++            return line
++        except BrokenPipe as e:
++            # Handle broken pipe gracefully by closing the handle and raising the exception
++            self.close()
++            raise e
+ 
+     @property
+     def closed(self) -> bool:

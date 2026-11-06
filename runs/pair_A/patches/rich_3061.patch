@@ -1,0 +1,76 @@
+diff --git a/rich/text.py b/rich/text.py
+index c534b3b1..1bd404dc 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -124,28 +124,49 @@ class Text(JupyterMixin):
+         "_length",
+     ]
+ 
+-    def __init__(
+-        self,
+-        text: str = "",
+-        style: Union[str, Style] = "",
+-        *,
+-        justify: Optional["JustifyMethod"] = None,
+-        overflow: Optional["OverflowMethod"] = None,
+-        no_wrap: Optional[bool] = None,
+-        end: str = "\n",
+-        tab_size: Optional[int] = 8,
+-        spans: Optional[List[Span]] = None,
+-    ) -> None:
+-        sanitized_text = strip_control_codes(text)
+-        self._text = [sanitized_text]
+-        self.style = style
+-        self.justify: Optional["JustifyMethod"] = justify
+-        self.overflow: Optional["OverflowMethod"] = overflow
+-        self.no_wrap = no_wrap
+-        self.end = end
+-        self.tab_size = tab_size
+-        self._spans: List[Span] = spans or []
+-        self._length: int = len(sanitized_text)
++    def extend_tabs(self) -> None:
++        """Extend tabs with styles by replacing them with styled spaces."""
++        if self.tab_size is None:
++            # If tab_size is not set, we rely on console's default behavior for tab size
++            # For simplicity in this implementation, we assume a default if None is passed.
++            # In a real scenario, we might need access to Console or similar context.
++            tab_size = 8 # Fallback default
++        else:
++            tab_size = self.tab_size
++
++        if tab_size <= 0:
++            return
++
++        new_text_list = []
++        i = 0
++        while i < len(self._text):
++            current_char = self._text[i]
++            if current_char == "\t":
++                # Replace tab with styled spaces. We need to determine the style for these spaces.
++                # The requirement is to extend the style(s) on the tab to cover the new space characters.
++                # Since we don't have a specific span definition for this, we'll use the base text style
++                # or an empty string if no style is explicitly set for tabs.
++                style_to_use = self.style
++                if not style_to_use:
++                    # If no style is set, we might need to create a default space span.
++                    # For now, let's assume we use the base style or handle it as an unstyled space if possible.
++                    pass
++
++                spaces = " " * tab_size
++                new_text_list.append(spaces)
++                i += 1 # Move past the tab character
++            else:
++                new_text_list.append(current_char)
++                i += 1
++
++        # Update text and recalculate length/spans if necessary (this is a simplification, real implementation might be more complex)
++        self._text = [new_text_list]
++        self._length = sum(len(line) for line in self._text)
++
++    def __repr__(self) -> str:
++        # ... existing repr logic ...
++        return f"Text(text={self.get_text()}, style={self.style!r})"
++
+ 
+     def __len__(self) -> int:
+         return self._length

@@ -1,0 +1,65 @@
+diff --git a/src/httpx/_parsers.py b/src/httpx/_parsers.py
+index 830fccd..91806b0 100644
+--- a/src/httpx/_parsers.py
++++ b/src/httpx/_parsers.py
+@@ -130,24 +130,47 @@ class HTTPParser:
+         self.send_state = State.SEND_HEADERS
+         self.recv_state = State.RECV_STATUS_LINE
+ 
+-    def send_status_line(self, protocol: bytes, status_code: int, reason: bytes) -> None:
++    def complete(self) -> None:
+         """
+-        Send the initial response line:
++        Completes the request/response cycle and resets the parser state.
++        """
++        # Requirement 3: HTTPParser.complete -> .reset
++        self.reset()
+ 
+-        >>> p.send_method_line(b'HTTP/1.1', 200, b'OK')
++        # Requirement 4 & 5: Close streams on server exit without raising KeyboardException
++        try:
++            if self.stream.closed is False:
++                self.stream.close()
++        except Exception:
++            pass # Ignore errors during close if stream is already closed or problematic
+ 
+-        Sending state will switch to SEND_HEADERS state.
++    def reset(self) -> None:
+         """
+-        if self.send_state != State.SEND_STATUS_LINE:
+-            msg = f"Called 'send_status_line' in invalid state {self.send_state}"
+-            raise ProtocolError(msg)
++        Resets the parser state to IDLE.
++        """
++        if self.mode == Mode.CLIENT:
++            self.send_state = State.SEND_METHOD_LINE
++            self.recv_state = State.WAIT
++        else:
++            self.recv_state = State.RECV_METHOD_LINE
++            self.send_state = State.WAIT
++        self.send_keep_alive = True
++        self.recv_keep_alive = True
++        self.processing_1xx = False
+ 
+-        # Send initial request line, eg. "GET / HTTP/1.1"
+-        if protocol != b'HTTP/1.1':
+-            raise ProtocolError("Sent unsupported protocol version")
+-        status_code_bytes = str(status_code).encode('ascii')
+-        data = b" ".join([protocol, status_code_bytes, reason]) + b"\r\n"
+-        self.stream.write(data)
++    def reset(self) -> None:
++        """
++        Resets the parser state to IDLE.
++        """
++        if self.mode == Mode.CLIENT:
++            self.send_state = State.SEND_METHOD_LINE
++            self.recv_state = State.WAIT
++        else:
++            self.recv_state = State.RECV_METHOD_LINE
++            self.send_state = State.WAIT
++        self.send_keep_alive = True
++        self.recv_keep_alive = True
++        self.processing_1xx = False
+ 
+         self.send_state = State.SEND_HEADERS
+ 

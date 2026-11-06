@@ -1,0 +1,41 @@
+diff --git a/rich/live.py b/rich/live.py
+index cc3a39bd..dd200267 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -106,14 +106,7 @@ class Live(JupyterMixin, RenderHook):
+             if self._get_renderable is not None
+             else self._renderable
+         )
+-        return renderable or ""
+-
+-    def start(self, refresh: bool = False) -> None:
+-        """Start live rendering display.
+-
+-        Args:
+-            refresh (bool, optional): Also refresh. Defaults to False.
+-        """
++            self._started = True
+         with self._lock:
+             if self._started:
+                 return
+@@ -134,13 +127,13 @@ class Live(JupyterMixin, RenderHook):
+                 except Exception:
+                     # If refresh fails, we want to stop the redirection of sys.stderr,
+                     # so the error stacktrace is properly displayed in the terminal.
+-                    # (or, if the code that calls Rich captures the exception and wants to display something,
+-                    # let this be displayed in the terminal).
+-                    self.stop()
+-                    raise
+-            if self.auto_refresh:
+-                self._refresh_thread = _RefreshThread(self, self.refresh_per_second)
+-                self._refresh_thread.start()
++            if self._nested:
++                if not self.transient:
++                    self.console.print(self.renderable)
++                return
++
++            if self.auto_refresh and self._refresh_thread is not None:
++                self._refresh_thread.stop()
+ 
+     def stop(self) -> None:
+         """Stop live rendering display."""

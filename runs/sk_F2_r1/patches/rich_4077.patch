@@ -1,0 +1,36 @@
+diff --git a/rich/file_proxy.py b/rich/file_proxy.py
+index 4b0b0da6..3926a556 100644
+--- a/rich/file_proxy.py
++++ b/rich/file_proxy.py
+@@ -28,23 +28,7 @@ class FileProxy(io.TextIOBase):
+     def write(self, text: str) -> int:
+         if not isinstance(text, str):
+             raise TypeError(f"write() argument must be str, not {type(text).__name__}")
+-        buffer = self.__buffer
+-        lines: List[str] = []
+-        while text:
+-            line, new_line, text = text.partition("\n")
+-            if new_line:
+-                lines.append("".join(buffer) + line)
+-                buffer.clear()
+-            else:
+-                buffer.append(line)
+-                break
+-        if lines:
+-            console = self.__console
+-            with console:
+-                output = Text("\n").join(
+-                    self.__ansi_decoder.decode_line(line) for line in lines
+-                )
+-                console.print(output)
++        self.__file.write(text)
+         return len(text)
+ 
+     def flush(self) -> None:
+@@ -55,3 +39,6 @@ class FileProxy(io.TextIOBase):
+ 
+     def fileno(self) -> int:
+         return self.__file.fileno()
++
++    def isatty(self) -> bool:
++        return self.__file.isatty()

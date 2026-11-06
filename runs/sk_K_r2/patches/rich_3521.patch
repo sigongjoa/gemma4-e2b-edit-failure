@@ -1,0 +1,46 @@
+diff --git a/rich/segment.py b/rich/segment.py
+index 5986aac7..7e983ea0 100644
+--- a/rich/segment.py
++++ b/rich/segment.py
+@@ -129,24 +129,27 @@ class Segment(NamedTuple):
+ 
+         cell_size = get_character_cell_size
+ 
+-        pos = int((cut / cell_length) * (len(text))) - 1
+-        if pos < 0:
+-            pos = 0
+-
+-        before = text[:pos]
+-        cell_pos = cell_len(before)
+-        if cell_pos == cut:
+-            return (
+-                _Segment(before, style, control),
+-                _Segment(text[pos:], style, control),
+-            )
+-        while pos < len(text):
+-            char = text[pos]
++        current_segment_text = ""
++        current_width = 0
++        for i, char in enumerate(text):
++            char_size = cell_size(char)
++            if current_width + char_size > cut:
++                # Split occurs before this character 'char'
++                return (_Segment(current_segment_text, style, control), _Segment(text[i:], style, control))
++
++            current_segment_text += char
++            current_width += char_size
++
++        # If loop finishes, the whole text fits in one segment (or exactly at cut)
++        if current_segment_text:
++             return (_Segment(current_segment_text, style, control), _Segment("", style, control))
++        else: # Empty input text
++             return (_Segment("", style, control), _Segment("", style, control)
+             pos += 1
+             cell_pos += cell_size(char)
+             before = text[:pos]
+             if cell_pos == cut:
+-                return (
++                return (_Segment(before, style, control), _Segment(text[pos:], style, control))
+                     _Segment(before, style, control),
+                     _Segment(text[pos:], style, control),
+                 )

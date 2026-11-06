@@ -1,0 +1,23 @@
+diff --git a/rich/live.py b/rich/live.py
+index cc3a39bd..dfacf6c3 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -128,14 +128,15 @@ class Live(JupyterMixin, RenderHook):
+             self.console.show_cursor(False)
+             self._enable_redirect_io()
+             self.console.push_render_hook(self)
+-            if refresh:
++            if refresh and (self._renderable is not None or self._get_renderable is not None):
+                 try:
+                     self.refresh()
+-                except Exception:
++                except Exception as e:
+                     # If refresh fails, we want to stop the redirection of sys.stderr,
+                     # so the error stacktrace is properly displayed in the terminal.
+                     # (or, if the code that calls Rich captures the exception and wants to display something,
+-                    # let this be displayed in the terminal).
++                    self.stop()
++                    raise e                    # let this be displayed in the terminal).
+                     self.stop()
+                     raise
+             if self.auto_refresh:

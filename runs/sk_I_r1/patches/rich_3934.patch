@@ -1,0 +1,30 @@
+diff --git a/rich/live.py b/rich/live.py
+index cc3a39bd..9ca43a90 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -128,7 +128,14 @@ class Live(JupyterMixin, RenderHook):
+             self.console.show_cursor(False)
+             self._enable_redirect_io()
+             self.console.push_render_hook(self)
+-            if refresh:
++            if self._screen:
++                self._alt_screen = self.console.set_alt_screen(True)
++            self.console.show_cursor(False)
++            self._enable_redirect_io()
++            self.console.push_render_hook(self)
++            # Call refresh immediately if auto-refresh is enabled, 
++            # or if the user explicitly requested it via 'refresh=True' in start().
++            if self.auto_refresh or refresh:
+                 try:
+                     self.refresh()
+                 except Exception:
+@@ -141,6 +148,9 @@ class Live(JupyterMixin, RenderHook):
+             if self.auto_refresh:
+                 self._refresh_thread = _RefreshThread(self, self.refresh_per_second)
+                 self._refresh_thread.start()
++            if self.auto_refresh:
++                self._refresh_thread = _RefreshThread(self, self.refresh_per_second)
++                self._refresh_thread.start()
+ 
+     def stop(self) -> None:
+         """Stop live rendering display."""

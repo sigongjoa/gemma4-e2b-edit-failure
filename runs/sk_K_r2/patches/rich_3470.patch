@@ -1,0 +1,28 @@
+diff --git a/rich/_log_render.py b/rich/_log_render.py
+index e8810100..512473be 100644
+--- a/rich/_log_render.py
++++ b/rich/_log_render.py
+@@ -28,6 +28,7 @@ class LogRender:
+         self.omit_repeated_times = omit_repeated_times
+         self.level_width = level_width
+         self._last_time: Optional[Text] = None
++        self.captured_data: dict = {}
+ 
+     def __call__(
+         self,
+@@ -60,11 +61,15 @@ class LogRender:
+                 log_time_display = time_format(log_time)
+             else:
+                 log_time_display = Text(log_time.strftime(time_format))
++
+             if log_time_display == self._last_time and self.omit_repeated_times:
+                 row.append(Text(" " * len(log_time_display)))
+             else:
+                 row.append(log_time_display)
+                 self._last_time = log_time_display
++
++        # Record captured data for this render call
++        self.captured_data[f"log_time"] = log_time or console.get_datetime()
+         if self.show_level:
+             row.append(level)
+ 

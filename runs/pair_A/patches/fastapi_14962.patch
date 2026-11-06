@@ -1,0 +1,57 @@
+diff --git a/fastapi/responses.py b/fastapi/responses.py
+index 6c8db6f3..c58ad819 100644
+--- a/fastapi/responses.py
++++ b/fastapi/responses.py
+@@ -1,6 +1,5 @@
+ from typing import Any
+-
+-from starlette.responses import FileResponse as FileResponse  # noqa
++\nfrom starlette.responses import FileResponse as FileResponse  # noqa
+ from starlette.responses import HTMLResponse as HTMLResponse  # noqa
+ from starlette.responses import JSONResponse as JSONResponse  # noqa
+ from starlette.responses import PlainTextResponse as PlainTextResponse  # noqa
+@@ -8,12 +7,14 @@ from starlette.responses import RedirectResponse as RedirectResponse  # noqa
+ from starlette.responses import Response as Response  # noqa
+ from starlette.responses import StreamingResponse as StreamingResponse  # noqa
+ 
++from pydantic import BaseModel
++
++
+ try:
+     import ujson
+ except ImportError:  # pragma: nocover
+     ujson = None  # type: ignore
+ 
+-
+ try:
+     import orjson
+ except ImportError:  # pragma: nocover
+@@ -29,8 +30,13 @@ class UJSONResponse(JSONResponse):
+     """
+ 
+     def render(self, content: Any) -> bytes:
++        if isinstance(content, BaseModel):
++            data = content.model_dump()
++        else:
++            data = content
++
+         assert ujson is not None, "ujson must be installed to use UJSONResponse"
+-        return ujson.dumps(content, ensure_ascii=False).encode("utf-8")
++        return ujson.dumps(data, ensure_ascii=False).encode("utf-8")
+ 
+ 
+ class ORJSONResponse(JSONResponse):
+@@ -42,7 +48,12 @@ class ORJSONResponse(JSONResponse):
+     """
+ 
+     def render(self, content: Any) -> bytes:
++        if isinstance(content, BaseModel):
++            data = content.model_dump()
++        else:
++            data = content
++
+         assert orjson is not None, "orjson must be installed to use ORJSONResponse"
+         return orjson.dumps(
+-            content, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY
++            data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY
+         )

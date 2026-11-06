@@ -1,0 +1,105 @@
+diff --git a/rich/progress.py b/rich/progress.py
+index c2de125a..8680f12a 100644
+--- a/rich/progress.py
++++ b/rich/progress.py
+@@ -1,5 +1,3 @@
+-from __future__ import annotations
+-
+ import io
+ import typing
+ import warnings
+@@ -15,7 +13,6 @@ from os import PathLike, stat
+ from threading import Event, RLock, Thread
+ from types import TracebackType
+ from typing import (
+-    TYPE_CHECKING,
+     Any,
+     BinaryIO,
+     Callable,
+@@ -33,80 +30,18 @@ from typing import (
+     Tuple,
+     Type,
+     TypeVar,
+-    Union,
+ )
+ 
+-if TYPE_CHECKING:
+-    # Can be replaced with `from typing import Self` in Python 3.11+
+-    from typing_extensions import Self  # pragma: no cover
+-
+-from . import filesize, get_console
+-from .console import Console, Group, JustifyMethod, RenderableType
+-from .highlighter import Highlighter
+-from .jupyter import JupyterMixin
+-from .live import Live
+-from .progress_bar import ProgressBar
+-from .spinner import Spinner
+-from .style import StyleType
+-from .table import Column, Table
+-from .text import Text, TextType
+-
+-TaskID = NewType("TaskID", int)
+-
+-ProgressType = TypeVar("ProgressType")
+-
+-GetTimeCallable = Callable[[], float]
+-
+-
+-_I = typing.TypeVar("_I", TextIO, BinaryIO)
+-
+-
+-class _TrackThread(Thread):
+-    """A thread to periodically update progress."""
+-
+-    def __init__(self, progress: "Progress", task_id: "TaskID", update_period: float):
+-        self.progress = progress
+-        self.task_id = task_id
+-        self.update_period = update_period
+-        self.done = Event()
+-
+-        self.completed = 0
+-        super().__init__(daemon=True)
+-
+-    def run(self) -> None:
+-        task_id = self.task_id
+-        advance = self.progress.advance
+-        update_period = self.update_period
+-        last_completed = 0
+-        wait = self.done.wait
+-        while not wait(update_period) and self.progress.live.is_started:
+-            completed = self.completed
+-            if last_completed != completed:
+-                advance(task_id, completed - last_completed)
+-                last_completed = completed
+-
+-        self.progress.update(self.task_id, completed=self.completed, refresh=True)
+-
+-    def __enter__(self) -> "_TrackThread":
+-        self.start()
+-        return self
+-
+-    def __exit__(
+-        self,
+-        exc_type: Optional[Type[BaseException]],
+-        exc_val: Optional[BaseException],
+-        exc_tb: Optional[TracebackType],
+-    ) -> None:
+-        self.done.set()
+-        self.join()
+-
+ 
+ def track(
+     sequence: Iterable[ProgressType],
+     description: str = "Working...",
+-    total: Optional[float] = None,
+-    completed: int = 0,
+-    auto_refresh: bool = True,
++    if not sequence and total is None:
++        total = 0
++
++    columns: List["ProgressColumn"] = (
++        [TextColumn("[progress.description]{task.description}")] if description else []
++    )
+     console: Optional[Console] = None,
+     transient: bool = False,
+     get_time: Optional[Callable[[], float]] = None,

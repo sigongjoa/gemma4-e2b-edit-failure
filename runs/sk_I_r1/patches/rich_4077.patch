@@ -1,0 +1,30 @@
+diff --git a/rich/console.py b/rich/console.py
+index 0bdce769..9d210cb2 100644
+--- a/rich/console.py
++++ b/rich/console.py
+@@ -965,15 +965,16 @@ class Console:
+         if force_color is not None:
+             return force_color != ""
+ 
+-        # Any other value defaults to auto detect
+-        isatty: Optional[Callable[[], bool]] = getattr(self.file, "isatty", None)
+-        try:
+-            return False if isatty is None else isatty()
+-        except ValueError:
+-            # in some situation (at the end of a pytest run for example) isatty() can raise
+-            # ValueError: I/O operation on closed file
+-            # return False because we aren't in a terminal anymore
+-            return False
++        isatty = getattr(self.file, "isatty", None)
++        if isatty and callable(isatty):
++            try:
++                return not isatty()
++            except ValueError:
++                # in some situation (at the end of a pytest run for example) isatty() can raise
++                # ValueError: I/O operation on closed file
++                # return False because we aren't in a terminal anymore
++                return False
++        return False
+ 
+     @property
+     def is_dumb_terminal(self) -> bool:

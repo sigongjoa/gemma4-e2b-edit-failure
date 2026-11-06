@@ -1,0 +1,27 @@
+diff --git a/rich/live.py b/rich/live.py
+index 8738cf09..6814083b 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -27,9 +27,20 @@ class _RefreshThread(Thread):
+ 
+     def run(self) -> None:
+         while not self.done.wait(1 / self.refresh_per_second):
++    def run(self) -> None:
++    def run(self) -> None:
++        while not self.done.is_set():
+             with self.live._lock:
+-                if not self.done.is_set():
+-                    self.live.refresh()
++                if self.done.is_set():
++                    break
++                self.live.refresh()
++                    except Exception as e:
++                        # If refresh fails, we want to stop the redirection of sys.stderr,
++                        # so the error stacktrace is properly displayed in the terminal.
++                        # (or, if the code that calls Rich captures the exception and wants to display something,
++                        # let this be displayed in the terminal).
++                        self.stop()
++                        raise e
+ 
+ 
+ class Live(JupyterMixin, RenderHook):

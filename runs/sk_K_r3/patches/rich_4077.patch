@@ -1,0 +1,41 @@
+diff --git a/rich/file_proxy.py b/rich/file_proxy.py
+index 4b0b0da6..83857d14 100644
+--- a/rich/file_proxy.py
++++ b/rich/file_proxy.py
+@@ -30,21 +30,24 @@ class FileProxy(io.TextIOBase):
+             raise TypeError(f"write() argument must be str, not {type(text).__name__}")
+         buffer = self.__buffer
+         lines: List[str] = []
+-        while text:
+-            line, new_line, text = text.partition("\n")
+-            if new_line:
+-                lines.append("".join(buffer) + line)
+-                buffer.clear()
++        current_line = ""
++
++        for char in text:
++            if char == '\n':
++                lines.append(current_line)
++                current_line = ""
+             else:
+-                buffer.append(line)
+-                break
++                current_line += char
++        
++        # Add the last line if it exists (even if it doesn't end with \n)
++        if current_line or not lines and text: 
++             lines.append(current_line)
++
++        # If we have lines, print them out
+         if lines:
+             console = self.__console
+-            with console:
+-                output = Text("\n").join(
+-                    self.__ansi_decoder.decode_line(line) for line in lines
+-                )
+-                console.print(output)
++            output = Text("\n").join(self.__ansi_decoder.decode_line(l) for l in lines)
++            console.print(output)
+         return len(text)
+ 
+     def flush(self) -> None:

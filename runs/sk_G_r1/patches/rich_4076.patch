@@ -1,0 +1,36 @@
+diff --git a/rich/_wrap.py b/rich/_wrap.py
+index 2e94ff6f..5d5e24fb 100644
+--- a/rich/_wrap.py
++++ b/rich/_wrap.py
+@@ -10,17 +10,13 @@ re_word = re.compile(r"\s*\S+\s*")
+ 
+ 
+ def words(text: str) -> Iterable[tuple[int, int, str]]:
+-    """Yields each word from the text as a tuple
+-    containing (start_index, end_index, word). A "word" in this context may
+-    include the actual word and any whitespace to the right.
+-    """
++    """Yields each word from the text as a tuple containing (start_index, end_index, word). A "word" in this context may include the actual word and any whitespace to the right."""
+     position = 0
+-    word_match = re_word.match(text, position)
+-    while word_match is not None:
+-        start, end = word_match.span()
+-        word = word_match.group(0)
++    # Find all sequences of non-whitespace characters. This is simpler than matching separators explicitly.
++    for match in re.finditer(r"\S+", text):
++        start, end = match.span()
++        word = match.group(0)
+         yield start, end, word
+-        word_match = re_word.match(text, end)
+ 
+ 
+ def divide_line(text: str, width: int, fold: bool = True) -> list[int]:
+@@ -42,7 +38,7 @@ def divide_line(text: str, width: int, fold: bool = True) -> list[int]:
+     _cell_len = cell_len
+ 
+     for start, _end, word in words(text):
+-        word_length = _cell_len(word.rstrip())
++        word_length = _cell_len(word)
+         remaining_space = width - cell_offset
+         word_fits_remaining_space = remaining_space >= word_length
+ 

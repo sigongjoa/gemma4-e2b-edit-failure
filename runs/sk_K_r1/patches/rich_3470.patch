@@ -1,0 +1,56 @@
+diff --git a/rich/logging.py b/rich/logging.py
+index b2624cd5..aafb6eed 100644
+--- a/rich/logging.py
++++ b/rich/logging.py
+@@ -132,23 +132,24 @@ class RichHandler(Handler):
+     def emit(self, record: LogRecord) -> None:
+         """Invoked by logging."""
+         message = self.format(record)
+-        traceback = None
+         if (
+             self.rich_tracebacks
+             and record.exc_info
+             and record.exc_info != (None, None, None)
+         ):
++            # Explicitly capture and potentially enrich the message if an exception is present
+             exc_type, exc_value, exc_traceback = record.exc_info
+-            assert exc_type is not None
+-            assert exc_value is not None
+-            traceback = Traceback.from_exception(
++            message = f"{record.levelname}: {record.getMessage()}
++" + Traceback.from_exception(
+                 exc_type,
+                 exc_value,
+                 exc_traceback,
+                 width=self.tracebacks_width,
+                 code_width=self.tracebacks_code_width,
+                 extra_lines=self.tracebacks_extra_lines,
+-                theme=self.tracebacks_theme,
++            )
++        else:
++            message = self.format(record)
+                 word_wrap=self.tracebacks_word_wrap,
+                 show_locals=self.tracebacks_show_locals,
+                 locals_max_length=self.locals_max_length,
+diff --git a/rich/text.py b/rich/text.py
+index 7b32967f..99f91337 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -62,14 +62,12 @@ class Span(NamedTuple):
+     def split(self, offset: int) -> Tuple["Span", Optional["Span"]]:
+         """Split a span in to 2 from a given offset."""
+ 
+-        if offset < self.start:
+-            return self, None
+-        if offset >= self.end:
++        if offset < self.start or offset >= self.end:
+             return self, None
+ 
+         start, end, style = self
+-        span1 = Span(start, min(end, offset), style)
+-        span2 = Span(span1.end, end, style)
++        span1 = Span(start, min(offset, end), style)
++        span2 = Span(max(offset, start), end, style)
+         return span1, span2
+ 
+     def move(self, offset: int) -> "Span":

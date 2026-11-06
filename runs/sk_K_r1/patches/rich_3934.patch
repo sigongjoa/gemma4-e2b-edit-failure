@@ -1,0 +1,40 @@
+diff --git a/rich/live.py b/rich/live.py
+index cc3a39bd..e7a7ef05 100644
+--- a/rich/live.py
++++ b/rich/live.py
+@@ -112,12 +112,16 @@ class Live(JupyterMixin, RenderHook):
+         """Start live rendering display.
+ 
+         Args:
+-            refresh (bool, optional): Also refresh. Defaults to False.
+-        """
++    def start(self, refresh: bool = False) -> None:
++        """Start live rendering display."""
+         with self._lock:
+-            if self._started:
++            if not self._started:
++                return
++
++            renderable = self.get_renderable() if self._get_renderable else self._renderable
++            if renderable is None:
++                self.stop()
+                 return
+-            self._started = True
+ 
+             if not self.console.set_live(self):
+                 self._nested = True
+@@ -147,7 +151,13 @@ class Live(JupyterMixin, RenderHook):
+         with self._lock:
+             if not self._started:
+                 return
+-            self._started = False
++
++            renderable = self.get_renderable() if self._get_renderable else self._renderable
++            if renderable is None:
++                self.stop()
++                return
++
++            self._started = True
+             self.console.clear_live()
+             if self._nested:
+                 if not self.transient:

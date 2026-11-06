@@ -1,0 +1,49 @@
+diff --git a/rich/_wrap.py b/rich/_wrap.py
+index 2e94ff6f..09022ea8 100644
+--- a/rich/_wrap.py
++++ b/rich/_wrap.py
+@@ -51,29 +51,25 @@ def divide_line(text: str, width: int, fold: bool = True) -> list[int]:
+             cell_offset += _cell_len(word)
+         else:
+             # Not enough space remaining for this word on the current line.
+-            if word_length > width:
+-                # The word doesn't fit on any line, so we can't simply
+-                # place it on the next line...
+-                if fold:
+-                    # Fold the word across multiple lines.
+-                    folded_word = chop_cells(word, width=width)
+-                    for last, line in loop_last(folded_word):
+-                        if start:
+-                            append(start)
+-                        if last:
+-                            cell_offset = _cell_len(line)
+-                        else:
+-                            start += len(line)
+-                else:
+-                    # Folding isn't allowed, so crop the word.
++            if fold:
++                # Fold the word across multiple lines if folding is enabled.
++                folded_word = chop_cells(word, width=width)
++                for last, line in loop_last(folded_word):
+                     if start:
+                         append(start)
+-                    cell_offset = _cell_len(word)
+-            elif cell_offset and start:
+-                # The word doesn't fit within the remaining space on the current
+-                # line, but it *can* fit on to the next (empty) line.
++                    if last:
++                        cell_offset = _cell_len(line)
++                    else:
++                        start += len(line)
++            elif start > 0:
++                # If folding is not allowed, and we have text already on the line (start > 0),
++                # we must break before this word.
+                 append(start)
+                 cell_offset = _cell_len(word)
++            else:
++                # Word doesn't fit and start is 0, which shouldn't happen if width >= length of word,
++                # but as a fallback for safety/edge cases where logic above fails.
++                pass
+ 
+     return break_positions
+ 
